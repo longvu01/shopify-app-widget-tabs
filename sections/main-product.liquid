@@ -463,6 +463,17 @@
 
               {%- when 'variant_picker' -%}
                 {% render 'product-variant-picker', product: product, block: block, product_form_id: product_form_id %}
+              {%- when 'widget_tabs' -%}
+                {%- render 'widget_tabs',
+                product: product,
+                shipping_options: block.settings.shipping_options
+                section_id: section.id
+              -%}
+                <script>
+                  console.log('shipping_options', {{block.settings.shipping_options|json}})
+
+                </script>
+
               {%- when 'buy_buttons' -%}
                 {%- render 'buy-buttons',
                   block: block,
@@ -887,6 +898,28 @@
             }
           ],
           "default": "circle"
+        }
+      ]
+    },
+    {
+      "type": "widget_tabs",
+      "name": "WidgetTabs",
+      "settings": [
+        {
+          "type": "select",
+          "id": "shipping_options",
+          "options": [
+              {
+                "value": "std",
+                "label": "Standard shipping"
+              },
+              {
+                "value": "fast",
+                "label": "Fast shipping"
+              }
+            ],
+          "default": "std",
+          "label": "Standard shipping"
         }
       ]
     },

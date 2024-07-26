@@ -32,6 +32,9 @@
         "quantity_selector": {
           "type": "quantity_selector"
         },
+        "widget_tabs": {
+          "type": "widget_tabs",
+        },
         "buy_buttons": {
           "type": "buy_buttons",
           "settings": {
@@ -92,6 +95,7 @@
         "price",
         "variant_picker",
         "quantity_selector",
+        "widget_tabs",
         "buy_buttons",
         "description",
         "collapsible-row-0",

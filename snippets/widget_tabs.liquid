@@ -1,0 +1,227 @@
+{% comment %} 
+    Renders product widget-tabs
+    Accepts: 
+    - product: {Object} product object. 
+    - shipping_options: {Object} shipping options.
+    - section_id: {String} section id.
+  
+    Usage: {% render 'widget_tabs', product: product shipping_options: shipping_options section_id: section_id  %} 
+{% endcomment %}
+
+<div class="product__info-widget" {{ block.shopify_attributes }}>
+  <div class="product__info-widget--tabs">
+    <button
+      id="shippingTab"
+      class="product__info-widget--tab_links"
+      onclick="handleChangeTab(event, 'Shipping')">Shipping</button>
+    <button class="product__info-widget--tab_links" onclick="handleChangeTab(event, 'Discount')">Discount</button>
+  </div>
+  <!-- Tab content -->
+  <div id="Shipping" class="product__info-widget--tab-content">
+    <select
+      name="shipping"
+      id="shippingType"
+      class="product__info-widget--select"
+      onchange="handleChangeShippingType(event)">
+      <option value="std">
+        Standard shipping
+      </option>
+
+      <option value="fast">
+        Fast shipping
+      </option>
+    </select>
+
+
+    <div class="product__info-widget--shipping-date-tab">
+      <div class="product__info-widget--shipping-dates-row">
+        <div class="text-wrapper">
+          <p>Order Date</p>
+        </div>
+
+        <div class="text-wrapper">
+          <p>Delivery Date</p>
+        </div>
+      </div>
+
+      <div class="product__info-widget--shipping-dates-row">
+        <div class="icon-wrapper">
+          <img
+            src="https://cdn.shopify.com/s/files/1/0657/5371/0773/files/cart.png?v=1721976736"
+            width="28"
+            height="28" />
+        </div>
+
+        <div class="product__info-widget--row-divider"></div>
+
+        <div class="icon-wrapper">
+          <img
+            src="https://cdn.shopify.com/s/files/1/0657/5371/0773/files/truck.png?v=1721979044"
+            width="28"
+            height="28" />
+        </div>
+      </div>
+
+      <div class="product__info-widget--shipping-dates-row">
+        <div class="text-wrapper">
+          <p id="orderDate" style="font-weight: 600"></p>
+        </div>
+        <div class="text-wrapper">
+          <p id="deliveryDate" style="font-weight: 600"></p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="Discount" class="product__info-widget--tab-content">
+    <select
+      name="discount"
+      class="product__info-widget--select"
+      onchange="handleChangeItemAmount(event)">
+      {%- for i in (1..10) -%}
+        <option value={{i}}>
+          Buy {{ i }}
+          {%- if i > 1 -%}
+            items
+          {%- else -%}
+            item
+          {%- endif -%}
+        </option>
+      {%- endfor -%}
+    </select>
+
+    <div class="product__info-widget--table-wrapper">
+      <table>
+        <tr>
+          <th>Quantity</th>
+          <th>Price</th>
+        </tr>
+
+        <tr>
+          <td id="itemQuantity">
+            Buy 1 item
+          </td>
+          <td id="itemPrice">
+            {{ product.selected_or_first_available_variant.price | money_with_currency }}
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  const convertDateFormat = (date) => date.getDate() + '/' + (+date.getMonth() + 1)
+  
+  function getDayAfter(dayAfterAmount) {
+    const now = new Date()
+    const dayAfter = new Date(now);
+    dayAfter.setDate(now.getDate() + dayAfterAmount);
+    return dayAfter
+  }
+  
+  function handleChangeTab(event, tabName) {
+    const tabContents = document.getElementsByClassName("product__info-widget--tab-content");
+    const tabLinks = document.getElementsByClassName("product__info-widget--tab_links");
+    
+    for (let i = 0; i < tabContents.length; i++) {
+      tabContents[i].style.display = "none";
+    }
+    
+    for (i = 0; i < tabLinks.length; i++) {
+      tabLinks[i].className = tabLinks[i].className.replace(" active", "");
+    }
+    
+    document.getElementById(tabName).style.display = "block";
+    event.currentTarget.className += " active";
+  }
+  
+  function handleChangeShippingType(event) {
+    const now = new Date()
+  
+    const orderDateEl = document.getElementById('orderDate')
+    const deliveryDateEl = document.getElementById('deliveryDate')
+  
+    const isStdShipping = event.currentTarget.value === 'std'
+  
+    const orderDate = convertDateFormat(now)
+    orderDateEl.innerText = orderDate
+  
+    if(isStdShipping) {
+      deliveryDateEl.innerText = convertDateFormat(getDayAfter(5)) + ' - ' + convertDateFormat(getDayAfter(7))
+    } else {
+      deliveryDateEl.innerText = convertDateFormat(getDayAfter(2)) + ' - ' + convertDateFormat(getDayAfter(4))
+    }
+  }
+  
+  const handleChangeItemAmount = (event) => {
+    // console.log({{ product | json }});
+    // console.log('selected_or_first_available_variant',{{ product.selected_or_first_available_variant | json }});
+  
+    const itemAmount = +event.currentTarget.value
+        
+    const itemQuantityEl = document.getElementById('itemQuantity')
+    const itemPriceEl = document.getElementById('itemPrice') 
+    
+    itemQuantityEl.innerText = `Buy ${itemAmount} ${itemAmount > 1 ? 'items' : 'item'}`
+  
+    const productPrice = {{product.selected_or_first_available_variant.price |  money_without_currency}}
+    let totalPriceWithoutDiscount = productPrice * itemAmount
+    
+    if(itemAmount === 1) {}
+    else if(itemAmount <= 4) {
+      totalPriceWithoutDiscount = totalPriceWithoutDiscount * 0.9
+    } else if (itemAmount <=7) {
+      totalPriceWithoutDiscount = totalPriceWithoutDiscount * 0.8
+    } else {
+      totalPriceWithoutDiscount = totalPriceWithoutDiscount * 0.7
+    }
+  
+    itemPriceEl.innerText = totalPriceWithoutDiscount.toFixed(2) +'{{ shop.currency }}'
+  }
+  
+  const init = () => {
+    const shippingTabEl = document.getElementById("shippingTab");
+  
+    shippingTabEl.click()
+    handleChangeShippingType({currentTarget: {value: 'std'}})
+  
+    const variantSelector = document.getElementById('variant-selects-{{ section.id }}');
+    // console.log('variantSelector',variantSelector);
+  
+    variantSelector.addEventListener('change', function() {
+    // var variantId = variantSelector.value;
+    // var selectedOption = variantSelector.options[variantSelector.selectedIndex];
+    // var newPrice = parseFloat(selectedOption.getAttribute('value'));
+  
+  //     console.log({
+  //       variantId,
+  // selectedOption,
+  // newPrice,
+  //     });
+  });
+  
+  const quantityInput = document.getElementById('Quantity-{{ section.id }}');
+  
+  quantityInput.addEventListener('change', function(event) {
+      const quantityInputValue = event.target.value;
+  
+  
+      handleChangeItemAmount({currentTarget: {value: quantityInputValue}})
+  
+    // var variantId = variantSelector.value;
+    // var selectedOption = variantSelector.options[variantSelector.selectedIndex];
+    // var newPrice = parseFloat(selectedOption.getAttribute('value'));
+  
+  //     console.log({
+  //       variantId,
+  // selectedOption,
+  // newPrice,
+  //     });
+  });
+  
+  }
+  
+  init()
+</script>
