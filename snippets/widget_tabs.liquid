@@ -1,11 +1,11 @@
 {% comment %} 
-    Renders product widget-tabs
-    Accepts: 
-    - product: {Object} product object. 
-    - shipping_options: {Object} shipping options.
-    - section_id: {String} section id.
-  
-    Usage: {% render 'widget_tabs', product: product shipping_options: shipping_options section_id: section_id  %} 
+                                                                          Renders product widget-tabs
+                                                                          Accepts: 
+                                                                          - product: {Object} product object. 
+                                                                          - shipping_options: {Object} shipping options.
+                                                                          - section_id: {String} section id.
+                                                                        
+                                                                          Usage: {% render 'widget_tabs', product: product shipping_options: shipping_options section_id: section_id  %} 
 {% endcomment %}
 
 <div class="product__info-widget" {{ block.shopify_attributes }}>
@@ -112,6 +112,8 @@
 </div>
 
 <script>
+  let variantPrice = {{product.selected_or_first_available_variant.price |  money_without_currency}}
+  
   const convertDateFormat = (date) => date.getDate() + '/' + (+date.getMonth() + 1)
   
   function getDayAfter(dayAfterAmount) {
@@ -155,30 +157,32 @@
     }
   }
   
-  const handleChangeItemAmount = (event) => {
-    // console.log({{ product | json }});
-    // console.log('selected_or_first_available_variant',{{ product.selected_or_first_available_variant | json }});
+  const calcPriceAfterDiscount = (itemAmount) => {
+    console.log({itemAmount, variantPrice});
   
-    const itemAmount = +event.currentTarget.value
-        
-    const itemQuantityEl = document.getElementById('itemQuantity')
-    const itemPriceEl = document.getElementById('itemPrice') 
-    
+      const itemQuantityEl = document.getElementById('itemQuantity')
     itemQuantityEl.innerText = `Buy ${itemAmount} ${itemAmount > 1 ? 'items' : 'item'}`
   
-    const productPrice = {{product.selected_or_first_available_variant.price |  money_without_currency}}
-    let totalPriceWithoutDiscount = productPrice * itemAmount
+    const itemPriceEl = document.getElementById('itemPrice')
+  
+    let totalPriceWithoutDiscount = variantPrice * itemAmount
     
     if(itemAmount === 1) {}
     else if(itemAmount <= 4) {
       totalPriceWithoutDiscount = totalPriceWithoutDiscount * 0.9
-    } else if (itemAmount <=7) {
+    } else if (itemAmount <= 7) {
       totalPriceWithoutDiscount = totalPriceWithoutDiscount * 0.8
     } else {
       totalPriceWithoutDiscount = totalPriceWithoutDiscount * 0.7
     }
   
     itemPriceEl.innerText = totalPriceWithoutDiscount.toFixed(2) +'{{ shop.currency }}'
+  }
+  
+  const handleChangeItemAmount = (event) => {
+    const itemAmount = +event.currentTarget.value
+      
+    calcPriceAfterDiscount(itemAmount)
   }
   
   const init = () => {
@@ -188,38 +192,21 @@
     handleChangeShippingType({currentTarget: {value: 'std'}})
   
     const variantSelector = document.getElementById('variant-selects-{{ section.id }}');
-    // console.log('variantSelector',variantSelector);
   
-    variantSelector.addEventListener('change', function() {
-    // var variantId = variantSelector.value;
-    // var selectedOption = variantSelector.options[variantSelector.selectedIndex];
-    // var newPrice = parseFloat(selectedOption.getAttribute('value'));
-  
-  //     console.log({
-  //       variantId,
-  // selectedOption,
-  // newPrice,
-  //     });
-  });
-  
-  const quantityInput = document.getElementById('Quantity-{{ section.id }}');
-  
-  quantityInput.addEventListener('change', function(event) {
-      const quantityInputValue = event.target.value;
+    variantSelector.addEventListener('change', function(event) {
+      const newPrice = event.target.value.replace(/\D/g,'')
+      variantPrice = newPrice
   
   
-      handleChangeItemAmount({currentTarget: {value: quantityInputValue}})
+      calcPriceAfterDiscount(1)
+    });
   
-    // var variantId = variantSelector.value;
-    // var selectedOption = variantSelector.options[variantSelector.selectedIndex];
-    // var newPrice = parseFloat(selectedOption.getAttribute('value'));
-  
-  //     console.log({
-  //       variantId,
-  // selectedOption,
-  // newPrice,
-  //     });
-  });
+    const quantityInput = document.getElementById('Quantity-{{ section.id }}');
+    quantityInput.addEventListener('change', function(event) {
+        const quantityInputValue = +event.target.value;
+    
+        handleChangeItemAmount({currentTarget: {value: quantityInputValue}})
+    });
   
   }
   
